@@ -1,43 +1,31 @@
-import os
+
+import streamlit as st
 import google.generativeai as genai
 
-# ඔබ ලබාදුන් API Key එක (ආරක්ෂාව සඳහා මෙය පසුව .env ගොනුවකට මාරු කරන්න)
-GEMINI_API_KEY = "AIzaSyBsjqpipbKvvsuGDTVsIAse07jitOmo-go"
+# API Key එක කෙලින්ම මෙතනට දමන්න (නැතිනම් Secrets වලට දාන්න පුළුවන්)
+API_KEY = "AIzaSyBsjqpipbKvvsuGDTVsIAse07jitOmo-go"
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-def setup_gemini():
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        # Gemini 1.5 Flash යනු ඉතා වේගවත් සහ කාර්යක්ෂම මොඩලයකි
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        return model
-    except Exception as e:
-        print(f"සැකසුම් දෝෂයක්: {e}")
-        return None
+st.title("🤖 Nova Gemini AI")
+st.subheader("ඔබට අවශ්‍ය ඕනෑම දෙයක් අසන්න")
 
-def start_chat():
-    model = setup_gemini()
-    if not model:
-        return
+# Chat history එක පවත්වා ගැනීම
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-    chat = model.start_chat(history=[])
-    
-    print("--- 🚀 Gemini AI සක්‍රීයයි (නැවැත්වීමට 'exit' ටයිප් කරන්න) ---")
+# කලින් කතා කරපු දේවල් පෙන්වීම
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    while True:
-        user_input = input("\nඔබ 👤: ")
-        
-        if user_input.lower() in ['exit', 'quit', 'bye']:
-            print("AI 🤖: සමුගන්නවා! සුබ දවසක්.")
-            break
+# User input එක ලබා ගැනීම
+if prompt := st.chat_input("මොනවද දැනගන්න ඕනේ?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-        try:
-            # AI එකෙන් පිළිතුර ලබා ගැනීම
-            response = chat.send_message(user_input, stream=False)
-            print(f"\nAI 🤖: {response.text}")
-            print("-" * 40)
-            
-        except Exception as e:
-            print(f"⚠️ දෝෂයක් සිදු විය: {e}")
-
-if __name__ == "__main__":
-    start_chat()
+    with st.chat_message("assistant"):
+        response = model.generate_content(prompt)
+        st.markdown(response.text)
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
