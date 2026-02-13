@@ -1,0 +1,43 @@
+import os
+import google.generativeai as genai
+
+# ඔබ ලබාදුන් API Key එක (ආරක්ෂාව සඳහා මෙය පසුව .env ගොනුවකට මාරු කරන්න)
+GEMINI_API_KEY = "AIzaSyBsjqpipbKvvsuGDTVsIAse07jitOmo-go"
+
+def setup_gemini():
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        # Gemini 1.5 Flash යනු ඉතා වේගවත් සහ කාර්යක්ෂම මොඩලයකි
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        return model
+    except Exception as e:
+        print(f"සැකසුම් දෝෂයක්: {e}")
+        return None
+
+def start_chat():
+    model = setup_gemini()
+    if not model:
+        return
+
+    chat = model.start_chat(history=[])
+    
+    print("--- 🚀 Gemini AI සක්‍රීයයි (නැවැත්වීමට 'exit' ටයිප් කරන්න) ---")
+
+    while True:
+        user_input = input("\nඔබ 👤: ")
+        
+        if user_input.lower() in ['exit', 'quit', 'bye']:
+            print("AI 🤖: සමුගන්නවා! සුබ දවසක්.")
+            break
+
+        try:
+            # AI එකෙන් පිළිතුර ලබා ගැනීම
+            response = chat.send_message(user_input, stream=False)
+            print(f"\nAI 🤖: {response.text}")
+            print("-" * 40)
+            
+        except Exception as e:
+            print(f"⚠️ දෝෂයක් සිදු විය: {e}")
+
+if __name__ == "__main__":
+    start_chat()
